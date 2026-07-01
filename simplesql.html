@@ -1,0 +1,1348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="A practical, executable reference for PostgreSQL SQL statements and core DBMS concepts. Every statement runs against one consistent sample database.">
+<title>Simple SQL &mdash; PostgreSQL in Practice + DBMS Concepts</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0B1F3A; --pg:#336791; --pg-light:#4d86b3; --amber:#E8A13C; --amber-deep:#c9812a;
+  --paper:#FBFAF7; --card:#FFFFFF; --slate:#28323f; --muted:#69737f; --line:#E4E1D9; --line-soft:#EFEDE6;
+  --term-bg:#0d1b2e; --term-bar:#122539; --term-line:#1e3450;
+  --syn-kw:#7cc4ff; --syn-fn:#f4b860; --syn-str:#8bd49c; --syn-num:#e8a1c4; --syn-com:#5f7089; --syn-punct:#b7c4d3; --syn-id:#e6edf3;
+  --font-display:'Space Grotesk',system-ui,sans-serif; --font-body:'Inter',system-ui,sans-serif; --font-mono:'JetBrains Mono',ui-monospace,'SFMono-Regular',Menlo,monospace;
+  --sidebar-w:274px; --radius:12px;
+}
+*{box-sizing:border-box;}
+html{scroll-behavior:smooth;}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto;}}
+body{margin:0;background:var(--paper);color:var(--slate);font-family:var(--font-body);font-size:16px;line-height:1.62;-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+a{color:var(--pg);text-decoration:none;}
+a:hover{text-decoration:underline;}
+body::before{content:"";position:fixed;inset:0;background-image:linear-gradient(var(--line-soft) 1px,transparent 1px),linear-gradient(90deg,var(--line-soft) 1px,transparent 1px);background-size:52px 52px;opacity:.5;pointer-events:none;z-index:0;}
+.skip{position:absolute;left:-9999px;top:0;background:var(--ink);color:#fff;padding:10px 16px;border-radius:0 0 8px 0;z-index:1000;}
+.skip:focus{left:0;}
+.shell{position:relative;z-index:1;display:grid;grid-template-columns:var(--sidebar-w) 1fr;}
+.sidebar{position:sticky;top:0;height:100vh;overflow-y:auto;background:var(--ink);border-right:1px solid #0a1830;padding:26px 18px 40px;color:#c9d4e2;}
+.brand{display:flex;align-items:center;gap:11px;margin-bottom:6px;text-decoration:none;}
+.brand:hover{text-decoration:none;}
+.brand__mark{width:38px;height:38px;flex:none;border-radius:9px;background:linear-gradient(150deg,var(--pg),#254e70);display:grid;place-items:center;box-shadow:inset 0 0 0 1px rgba(255,255,255,.08);}
+.brand__mark svg{width:22px;height:22px;}
+.brand__name{font-family:var(--font-display);font-weight:700;font-size:1.05rem;color:#fff;line-height:1.1;}
+.brand__sub{font-size:.7rem;color:var(--amber);letter-spacing:.14em;text-transform:uppercase;font-weight:600;}
+.search{margin:20px 0 14px;position:relative;}
+.search input{width:100%;padding:10px 12px 10px 34px;border-radius:9px;border:1px solid var(--term-line);background:var(--term-bg);color:#e6edf3;font-family:var(--font-body);font-size:.86rem;}
+.search input::placeholder{color:#6b7c92;}
+.search input:focus{outline:2px solid var(--pg-light);outline-offset:1px;border-color:transparent;}
+.search svg{position:absolute;left:11px;top:50%;transform:translateY(-50%);width:15px;height:15px;color:#6b7c92;}
+.nav{margin-top:8px;}
+.nav__group{font-family:var(--font-display);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:#67788e;margin:20px 0 8px;font-weight:600;}
+.nav a{display:block;color:#aebccd;font-size:.87rem;padding:6px 10px;border-radius:7px;border-left:2px solid transparent;margin-bottom:1px;transition:background .15s,color .15s;}
+.nav a:hover{background:rgba(255,255,255,.05);color:#fff;text-decoration:none;}
+.nav a.active{background:rgba(51,103,145,.28);color:#fff;border-left-color:var(--amber);font-weight:500;}
+.main{min-width:0;padding:0 clamp(20px,5vw,68px) 90px;}
+.wrap{max-width:900px;margin:0 auto;}
+.hero{padding:64px 0 40px;}
+.hero__eyebrow{font-family:var(--font-mono);font-size:.76rem;letter-spacing:.05em;color:var(--pg);background:rgba(51,103,145,.1);display:inline-block;padding:5px 11px;border-radius:20px;border:1px solid rgba(51,103,145,.22);margin-bottom:22px;}
+.hero h1{font-family:var(--font-display);font-weight:700;font-size:clamp(2.1rem,5vw,3.35rem);line-height:1.04;letter-spacing:-.02em;margin:0 0 18px;color:var(--ink);}
+.hero h1 em{font-style:normal;color:var(--pg);}
+.hero__lead{font-size:1.12rem;color:var(--muted);max-width:60ch;margin:0 0 30px;}
+.hero__stats{display:flex;flex-wrap:wrap;gap:26px;margin-top:8px;}
+.stat{border-left:2px solid var(--amber);padding-left:13px;}
+.stat b{display:block;font-family:var(--font-display);font-size:1.5rem;color:var(--ink);line-height:1;}
+.stat span{font-size:.8rem;color:var(--muted);}
+.block{padding:46px 0;border-top:1px solid var(--line);scroll-margin-top:20px;}
+.block__head{margin-bottom:26px;}
+.block__tag{font-family:var(--font-mono);font-size:.74rem;letter-spacing:.04em;color:var(--amber-deep);text-transform:uppercase;font-weight:500;display:block;margin-bottom:7px;}
+.block__title{font-family:var(--font-display);font-weight:700;font-size:clamp(1.6rem,3.4vw,2.15rem);letter-spacing:-.015em;margin:0;color:var(--ink);}
+.block__intro{color:var(--muted);margin:12px 0 0;max-width:70ch;font-size:.98rem;}
+.topic{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px 24px;margin-bottom:20px;scroll-margin-top:20px;box-shadow:0 1px 2px rgba(11,31,58,.03);}
+.topic__name{font-family:var(--font-mono);font-weight:700;font-size:1.02rem;color:var(--ink);margin:0 0 5px;letter-spacing:-.01em;}
+.topic__name .kw{color:var(--pg);}
+.topic__lead{color:var(--muted);font-size:.92rem;margin:0 0 16px;}
+.topic__note{font-size:.92rem;margin:15px 0 0;color:var(--slate);}
+.topic__note code,.topic__lead code,.term code,.callout code,.prose code,.block__intro code,.footer code{font-family:var(--font-mono);font-size:.85em;background:var(--line-soft);padding:.1em .4em;border-radius:5px;color:var(--ink);border:1px solid var(--line);}
+.topic h4{font-family:var(--font-display);font-size:.98rem;color:var(--ink);margin:20px 0 8px;}
+.code{margin:0;border-radius:10px;overflow:hidden;border:1px solid var(--term-line);}
+.code__cap{display:flex;align-items:center;justify-content:space-between;background:var(--term-bar);padding:8px 12px;border-bottom:1px solid var(--term-line);}
+.code__dots{display:flex;gap:6px;align-items:center;}
+.code__dots i{width:10px;height:10px;border-radius:50%;display:block;}
+.code__dots i:nth-child(1){background:#ff5f57;}
+.code__dots i:nth-child(2){background:#febc2e;}
+.code__dots i:nth-child(3){background:#28c840;}
+.code__lang{font-family:var(--font-mono);font-size:.7rem;color:#7d8fa6;margin-left:8px;letter-spacing:.08em;text-transform:uppercase;}
+.code__copy{font-family:var(--font-mono);font-size:.72rem;color:#9fb1c6;background:transparent;border:1px solid var(--term-line);border-radius:6px;padding:3px 9px;cursor:pointer;transition:.15s;}
+.code__copy:hover{background:var(--pg);color:#fff;border-color:var(--pg);}
+.code__copy.ok{background:#1f7a44;color:#fff;border-color:#1f7a44;}
+.code pre{margin:0;background:var(--term-bg);color:var(--syn-id);padding:16px 18px;overflow-x:auto;font-family:var(--font-mono);font-size:.855rem;line-height:1.72;}
+.code pre code{font-family:inherit;white-space:pre;}
+.prompt{color:var(--amber);user-select:none;}
+.s-kw{color:var(--syn-kw);font-weight:500;}
+.s-fn{color:var(--syn-fn);}
+.s-str{color:var(--syn-str);}
+.s-num{color:var(--syn-num);}
+.s-com{color:var(--syn-com);font-style:italic;}
+.s-punct{color:var(--syn-punct);}
+.s-id{color:var(--syn-id);}
+.msg{font-family:var(--font-mono);font-size:.78rem;color:#8bd49c;background:#0a1626;padding:8px 18px;border-top:1px solid var(--term-line);}
+.msg::before{content:"\21b3  ";color:#5f7089;}
+.result{background:#f5f7fa;border-top:1px solid var(--term-line);padding:0;overflow-x:auto;}
+table.rset{border-collapse:collapse;width:100%;font-family:var(--font-mono);font-size:.8rem;}
+table.rset th,table.rset td{padding:6px 14px;text-align:left;border-bottom:1px solid #dbe2ea;white-space:nowrap;color:#2a3441;}
+table.rset th{color:var(--pg);font-weight:600;border-bottom:2px solid #c3ceda;background:#eef2f6;}
+table.rset td.num{text-align:right;}
+table.rset td.null{color:#a9b3bf;font-style:italic;}
+table.rset tr:last-child td{border-bottom:none;}
+.rset__count{font-family:var(--font-mono);font-size:.75rem;color:#7d8798;padding:7px 14px;background:#eef2f6;border-top:1px solid #dbe2ea;}
+.callout{border-left:3px solid var(--amber);background:#fdf6ea;border-radius:0 8px 8px 0;padding:12px 16px;margin:16px 0 0;font-size:.9rem;color:#5c4a2a;}
+.callout b{color:var(--amber-deep);}
+.callout.tip{border-color:var(--pg);background:#eef4f9;color:#2c4557;}
+.callout.tip b{color:var(--pg);}
+.prose{font-size:.96rem;}
+.prose p{margin:0 0 12px;}
+.dtable{width:100%;border-collapse:collapse;margin:4px 0 0;font-size:.88rem;background:var(--card);border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+.dtable th{background:var(--ink);color:#fff;text-align:left;padding:9px 13px;font-family:var(--font-display);font-size:.82rem;font-weight:600;}
+.dtable td{padding:9px 13px;border-top:1px solid var(--line-soft);vertical-align:top;}
+.dtable td:first-child{font-family:var(--font-mono);color:var(--pg);white-space:nowrap;font-size:.83rem;}
+.dtable tr:nth-child(even) td{background:#faf9f5;}
+.subhead{font-family:var(--font-display);font-weight:600;font-size:1.05rem;color:var(--ink);margin:30px 0 14px;padding-bottom:8px;border-bottom:1px dashed var(--line);display:flex;align-items:center;gap:9px;}
+.subhead::before{content:"";width:8px;height:8px;background:var(--amber);border-radius:2px;transform:rotate(45deg);}
+.terms{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:14px;}
+.term{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:15px 17px;box-shadow:0 1px 2px rgba(11,31,58,.03);}
+.term h5{font-family:var(--font-display);font-weight:600;font-size:.98rem;color:var(--ink);margin:0 0 3px;}
+.term .one{font-size:.82rem;color:var(--pg);font-weight:500;margin:0 0 8px;}
+.term p{font-size:.87rem;color:var(--slate);margin:0;line-height:1.55;}
+.term.wide{grid-column:1/-1;}
+.footer{border-top:1px solid var(--line);padding:34px 0 10px;color:var(--muted);font-size:.85rem;}
+.footer b{color:var(--ink);font-family:var(--font-display);}
+.footer a{font-weight:500;}
+.menu-btn{display:none;position:fixed;top:14px;left:14px;z-index:60;width:44px;height:44px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;box-shadow:0 2px 10px rgba(11,31,58,.12);align-items:center;justify-content:center;}
+.menu-btn svg{width:22px;height:22px;color:var(--ink);}
+.scrim{display:none;position:fixed;inset:0;background:rgba(11,31,58,.45);z-index:40;}
+@media (max-width:920px){
+  .shell{grid-template-columns:1fr;}
+  .sidebar{position:fixed;top:0;left:0;width:290px;z-index:50;transform:translateX(-100%);transition:transform .25s ease;}
+  .sidebar.open{transform:translateX(0);box-shadow:8px 0 30px rgba(11,31,58,.3);}
+  .scrim.show{display:block;}
+  .menu-btn{display:flex;}
+  .main{padding-top:8px;}
+  .hero{padding-top:70px;}
+}
+@media (max-width:520px){
+  body{font-size:15px;}
+  .topic{padding:18px 15px 20px;}
+  .hero__stats{gap:18px;}
+}
+.no-match{display:none !important;}
+.reveal{opacity:0;transform:translateY(10px);transition:opacity .5s ease,transform .5s ease;}
+.reveal.in{opacity:1;transform:none;}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;transform:none;transition:none;}}
+:focus-visible{outline:2px solid var(--pg);outline-offset:2px;border-radius:4px;}
+</style>
+</head>
+<body>
+<a class="skip" href="#overview">Skip to content</a>
+<button class="menu-btn" id="menuBtn" aria-label="Open navigation">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+</button>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+  <aside class="sidebar" id="sidebar">
+    <a class="brand" href="#overview">
+      <span class="brand__mark">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.7"><ellipse cx="12" cy="6" rx="8" ry="3.3"/><path d="M4 6v6c0 1.8 3.6 3.3 8 3.3s8-1.5 8-3.3V6"/><path d="M4 12v6c0 1.8 3.6 3.3 8 3.3s8-1.5 8-3.3v-6"/></svg>
+      </span>
+      <span><span class="brand__name">Simple&nbsp;SQL</span><br><span class="brand__sub">Postgres&nbsp;&middot;&nbsp;DBMS</span></span>
+    </a>
+    <div class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="search" id="search" placeholder="Filter statements &amp; terms&hellip;" aria-label="Filter content">
+    </div>
+    <nav class="nav" id="nav" aria-label="Sections">
+      <div class="nav__group">Start here</div>
+      <a href="#overview">Overview</a>
+      <a href="#schema">Sample database</a>
+      <a href="#psql">psql commands</a>
+      <div class="nav__group">SQL in practice</div>
+      <a href="#ddl">DDL &mdash; define</a>
+      <a href="#dml">DML &mdash; modify</a>
+      <a href="#select">SELECT &mdash; query</a>
+      <a href="#joins">JOINs</a>
+      <a href="#subqueries">Subqueries &amp; CTEs</a>
+      <a href="#setops">Set operations</a>
+      <a href="#windows">Window functions</a>
+      <a href="#transactions">Transactions</a>
+      <a href="#dcl">Permissions (DCL)</a>
+      <a href="#extras">Postgres extras</a>
+      <div class="nav__group">Concepts</div>
+      <a href="#glossary">DBMS glossary</a>
+    </nav>
+  </aside>
+  <main class="main">
+  <div class="wrap">
+    <header class="hero" id="overview">
+      <span class="hero__eyebrow">postgres=# -- learn by running</span>
+      <h1>Every SQL statement you need, <em>actually executed.</em></h1>
+      <p class="hero__lead">A practical PostgreSQL reference where each statement runs against one small, consistent sample database &mdash; so you see the query <em>and</em> the rows it returns. Followed by a plain-English glossary of the DBMS ideas behind it all.</p>
+      <figure class="code reveal">
+        <figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">psql</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql"><span class="prompt">postgres=# </span>SELECT first_name, salary, dept_id
+           FROM employees
+           WHERE salary > 70000
+           ORDER BY salary DESC;</code></pre>
+        <div class="result">
+          <table class="rset"><thead><tr><th>first_name</th><th>salary</th><th>dept_id</th></tr></thead>
+            <tbody>
+              <tr><td>Asha</td><td class="num">95000</td><td class="num">10</td></tr>
+              <tr><td>Rahul</td><td class="num">88000</td><td class="num">20</td></tr>
+              <tr><td>Vikram</td><td class="num">72000</td><td class="num">10</td></tr>
+            </tbody></table>
+          <div class="rset__count">(3 rows)</div>
+        </div>
+      </figure>
+      <div class="hero__stats">
+        <div class="stat"><b>60+</b><span>runnable statements</span></div>
+        <div class="stat"><b>70+</b><span>DBMS terms defined</span></div>
+        <div class="stat"><b>1</b><span>sample DB, start to finish</span></div>
+      </div>
+    </header>
+    <section class="block" id="schema">
+      <div class="block__head">
+        <span class="block__tag">The dataset &middot; everything below runs on this</span>
+        <h2 class="block__title">The sample database</h2>
+        <p class="block__intro">A tiny company with four tables. Every example on this page queries this exact data, so you can predict &mdash; and verify &mdash; each result. Copy the setup script into any Postgres instance to follow along.</p>
+      </div>
+      <div class="topic reveal">
+        <h4 style="margin-top:0">Tables &amp; relationships</h4>
+        <div class="prose"><p><code>departments</code> has many <code>employees</code>. Each employee optionally reports to another employee (their manager). <code>projects</code> belong to a department, and <code>employee_projects</code> is a junction table linking employees to the projects they work on (a many-to-many relationship).</p></div>
+        <figure class="code" style="margin-top:14px"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">relationships</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="plain">departments (1) ----&lt; (many) employees --+
+     |                          ^         | manager_id
+     | (1)                      +---------+ (self-reference)
+     v
+  projects (many)        employees &gt;----&lt; projects
+                          via employee_projects (junction)</code></pre></figure>
+      </div>
+      <div class="topic reveal">
+        <h4 style="margin-top:0">Seed data (what the tables contain)</h4>
+        <p class="topic__lead">employees</p>
+        <div class="result" style="border-radius:8px;border:1px solid var(--line);">
+          <table class="rset"><thead><tr><th>emp_id</th><th>first_name</th><th>last_name</th><th>salary</th><th>dept_id</th><th>manager_id</th></tr></thead>
+            <tbody>
+              <tr><td class="num">1</td><td>Asha</td><td>Rao</td><td class="num">95000</td><td class="num">10</td><td class="null">NULL</td></tr>
+              <tr><td class="num">2</td><td>Vikram</td><td>Nair</td><td class="num">72000</td><td class="num">10</td><td class="num">1</td></tr>
+              <tr><td class="num">3</td><td>Priya</td><td>Menon</td><td class="num">68000</td><td class="num">10</td><td class="num">1</td></tr>
+              <tr><td class="num">4</td><td>Rahul</td><td>Sharma</td><td class="num">88000</td><td class="num">20</td><td class="null">NULL</td></tr>
+              <tr><td class="num">5</td><td>Sneha</td><td>Iyer</td><td class="num">54000</td><td class="num">20</td><td class="num">4</td></tr>
+              <tr><td class="num">6</td><td>Arjun</td><td>Gupta</td><td class="num">61000</td><td class="num">30</td><td class="null">NULL</td></tr>
+              <tr><td class="num">7</td><td>Divya</td><td>Reddy</td><td class="num">49000</td><td class="num">30</td><td class="num">6</td></tr>
+              <tr><td class="num">8</td><td>Karan</td><td>Bose</td><td class="num">58000</td><td class="null">NULL</td><td class="null">NULL</td></tr>
+            </tbody></table>
+          <div class="rset__count">(8 rows)</div>
+        </div>
+        <p class="topic__lead" style="margin-top:16px">departments</p>
+        <div class="result" style="border-radius:8px;border:1px solid var(--line);">
+          <table class="rset"><thead><tr><th>dept_id</th><th>dept_name</th><th>location</th></tr></thead>
+            <tbody>
+              <tr><td class="num">10</td><td>Engineering</td><td>Bangalore</td></tr>
+              <tr><td class="num">20</td><td>Sales</td><td>Mumbai</td></tr>
+              <tr><td class="num">30</td><td>Marketing</td><td>Delhi</td></tr>
+              <tr><td class="num">40</td><td>HR</td><td>Bangalore</td></tr>
+            </tbody></table>
+          <div class="rset__count">(4 rows) &middot; Note: HR (40) has no employees yet &mdash; useful for LEFT JOIN demos.</div>
+        </div>
+        <p class="callout tip"><b>Why the gaps?</b> Karan has no department and HR has no staff on purpose. Those "missing" links are what make outer joins and <code>NULL</code> handling visible later.</p>
+      </div>
+      <div class="topic reveal">
+        <h4 style="margin-top:0">Full setup script</h4>
+        <p class="topic__lead">Run this once to create and populate everything.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">setup.sql</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE TABLE departments (
+    dept_id    INT PRIMARY KEY,
+    dept_name  VARCHAR(50) NOT NULL,
+    location   VARCHAR(50)
+);
+
+CREATE TABLE employees (
+    emp_id      SERIAL PRIMARY KEY,
+    first_name  VARCHAR(50) NOT NULL,
+    last_name   VARCHAR(50),
+    email       VARCHAR(100) UNIQUE,
+    hire_date   DATE DEFAULT CURRENT_DATE,
+    salary      NUMERIC(10,2) CHECK (salary > 0),
+    dept_id     INT REFERENCES departments(dept_id),
+    manager_id  INT REFERENCES employees(emp_id)
+);
+
+CREATE TABLE projects (
+    project_id    INT PRIMARY KEY,
+    project_name  VARCHAR(80) NOT NULL,
+    budget        NUMERIC(12,2),
+    dept_id       INT REFERENCES departments(dept_id)
+);
+
+CREATE TABLE employee_projects (
+    emp_id      INT REFERENCES employees(emp_id),
+    project_id  INT REFERENCES projects(project_id),
+    hours       INT DEFAULT 0,
+    PRIMARY KEY (emp_id, project_id)   -- composite key
+);
+
+INSERT INTO departments VALUES
+  (10,'Engineering','Bangalore'),(20,'Sales','Mumbai'),
+  (30,'Marketing','Delhi'),(40,'HR','Bangalore');
+
+INSERT INTO employees (first_name,last_name,email,hire_date,salary,dept_id,manager_id) VALUES
+  ('Asha','Rao','asha@ex.com','2019-03-15',95000,10,NULL),
+  ('Vikram','Nair','vikram@ex.com','2020-07-01',72000,10,1),
+  ('Priya','Menon','priya@ex.com','2021-01-20',68000,10,1),
+  ('Rahul','Sharma','rahul@ex.com','2018-11-05',88000,20,NULL),
+  ('Sneha','Iyer','sneha@ex.com','2022-06-10',54000,20,4),
+  ('Arjun','Gupta','arjun@ex.com','2020-09-25',61000,30,NULL),
+  ('Divya','Reddy','divya@ex.com','2023-02-14',49000,30,6),
+  ('Karan','Bose','karan@ex.com','2021-08-30',58000,NULL,NULL);
+
+INSERT INTO projects VALUES
+  (100,'Apollo',500000,10),(101,'Mercury',250000,10),
+  (102,'Orion',300000,20),(103,'Titan',150000,40);
+
+INSERT INTO employee_projects VALUES
+  (1,100,120),(2,100,200),(2,101,80),
+  (3,101,160),(4,102,140),(5,102,90);</code></pre></figure>
+      </div>
+    </section>
+
+    <section class="block" id="psql">
+      <div class="block__head">
+        <span class="block__tag">The client &middot; not SQL, but you type it constantly</span>
+        <h2 class="block__title">psql meta-commands</h2>
+        <p class="block__intro">These backslash commands belong to the <code>psql</code> terminal client, not to SQL itself. They are how you navigate a database from the command line &mdash; list tables, inspect structure, switch databases.</p>
+      </div>
+      <div class="topic reveal">
+        <table class="dtable"><thead><tr><th style="width:34%">Command</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td>\l</td><td>List all databases on the server.</td></tr>
+            <tr><td>\c mydb</td><td>Connect to (switch into) the database <code>mydb</code>.</td></tr>
+            <tr><td>\dt</td><td>List tables in the current schema.</td></tr>
+            <tr><td>\d employees</td><td>Describe a table: its columns, types, indexes, and constraints.</td></tr>
+            <tr><td>\du</td><td>List roles (users) and their privileges.</td></tr>
+            <tr><td>\dn</td><td>List schemas.</td></tr>
+            <tr><td>\di</td><td>List indexes.</td></tr>
+            <tr><td>\x</td><td>Toggle expanded output (rows shown as key/value blocks &mdash; great for wide tables).</td></tr>
+            <tr><td>\timing</td><td>Toggle query execution timing on/off.</td></tr>
+            <tr><td>\i file.sql</td><td>Run all SQL from a file.</td></tr>
+            <tr><td>\q</td><td>Quit psql.</td></tr>
+          </tbody></table>
+        <p class="callout"><b>Remember:</b> backslash commands are a psql convenience. In application code (Python, Java, Node) you only ever send real SQL &mdash; everything from the next section onward.</p>
+      </div>
+    </section>
+
+    <section class="block" id="ddl">
+      <div class="block__head">
+        <span class="block__tag">DDL &middot; Data Definition Language</span>
+        <h2 class="block__title">Defining structure</h2>
+        <p class="block__intro">DDL statements create and change the <em>shape</em> of your database &mdash; databases, tables, columns, constraints, indexes, and views. They define the container; DML (next) fills it with data.</p>
+      </div>
+      <div class="topic reveal" id="create-database">
+        <h3 class="topic__name"><span class="kw">CREATE DATABASE</span></h3>
+        <p class="topic__lead">Creates a brand-new, empty database.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE DATABASE company_db;</code></pre><div class="msg">CREATE DATABASE</div></figure>
+        <p class="topic__note">A database is the top-level container for tables and other objects. You then connect to it (<code>\c company_db</code> in psql) before creating tables inside it.</p>
+      </div>
+      <div class="topic reveal" id="datatypes">
+        <h3 class="topic__name">Common data types</h3>
+        <p class="topic__lead">Every column has a type. Choosing the right one enforces correctness and saves space.</p>
+        <table class="dtable"><thead><tr><th style="width:30%">Type</th><th>Use it for</th></tr></thead>
+          <tbody>
+            <tr><td>INT / BIGINT</td><td>Whole numbers. <code>BIGINT</code> for very large counts/IDs.</td></tr>
+            <tr><td>SERIAL / BIGSERIAL</td><td>Auto-incrementing integer &mdash; perfect for surrogate primary keys.</td></tr>
+            <tr><td>NUMERIC(p,s)</td><td>Exact decimals (money!). <code>NUMERIC(10,2)</code> = up to 10 digits, 2 after the point.</td></tr>
+            <tr><td>REAL / DOUBLE PRECISION</td><td>Approximate floating-point &mdash; scientific data, not money.</td></tr>
+            <tr><td>VARCHAR(n) / TEXT</td><td>Strings. <code>VARCHAR(n)</code> caps length; <code>TEXT</code> is unlimited.</td></tr>
+            <tr><td>BOOLEAN</td><td><code>TRUE</code> / <code>FALSE</code> / <code>NULL</code>.</td></tr>
+            <tr><td>DATE / TIMESTAMP</td><td>A calendar date, or a date-and-time. <code>TIMESTAMPTZ</code> stores the time zone too.</td></tr>
+            <tr><td>UUID</td><td>Globally unique 128-bit identifier.</td></tr>
+            <tr><td>JSON / JSONB</td><td>Structured documents. <code>JSONB</code> is binary, indexable, and faster to query.</td></tr>
+            <tr><td>type[]</td><td>Arrays, e.g. <code>TEXT[]</code> for a list of tags in one column.</td></tr>
+          </tbody></table>
+      </div>
+      <div class="topic reveal" id="create-table">
+        <h3 class="topic__name"><span class="kw">CREATE TABLE</span> + constraints</h3>
+        <p class="topic__lead">Defines a table: its columns, their types, and the rules (constraints) their values must obey.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE TABLE employees (
+    emp_id      SERIAL PRIMARY KEY,          -- auto ID, unique + not null
+    first_name  VARCHAR(50) NOT NULL,        -- must have a value
+    email       VARCHAR(100) UNIQUE,         -- no duplicates allowed
+    hire_date   DATE DEFAULT CURRENT_DATE,   -- fills today if omitted
+    salary      NUMERIC(10,2) CHECK (salary > 0),  -- must be positive
+    dept_id     INT REFERENCES departments(dept_id) -- foreign key
+);</code></pre><div class="msg">CREATE TABLE</div></figure>
+        <p class="topic__note">The constraint keywords each enforce one rule: <code>PRIMARY KEY</code> = unique row identifier, <code>NOT NULL</code> = value required, <code>UNIQUE</code> = no duplicates, <code>CHECK</code> = custom condition, <code>DEFAULT</code> = fallback value, <code>REFERENCES</code> = must match a row in another table (a foreign key).</p>
+      </div>
+      <div class="topic reveal" id="identity">
+        <h3 class="topic__name">SERIAL vs GENERATED IDENTITY</h3>
+        <p class="topic__lead">Two ways to auto-generate IDs. <code>IDENTITY</code> is the modern SQL-standard approach.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Classic Postgres style
+id  SERIAL PRIMARY KEY
+
+-- Modern, portable, SQL-standard style
+id  INT GENERATED ALWAYS AS IDENTITY PRIMARY KEY</code></pre></figure>
+        <p class="topic__note">Both produce auto-incrementing integers. Prefer <code>GENERATED ALWAYS AS IDENTITY</code> for new tables &mdash; it is clearer about ownership of the sequence and is the cross-database standard.</p>
+      </div>
+      <div class="topic reveal" id="alter-table">
+        <h3 class="topic__name"><span class="kw">ALTER TABLE</span></h3>
+        <p class="topic__lead">Changes an existing table's structure without recreating it.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Add a column
+ALTER TABLE employees ADD COLUMN phone VARCHAR(15);
+
+-- Remove a column
+ALTER TABLE employees DROP COLUMN phone;
+
+-- Change a column's type
+ALTER TABLE employees ALTER COLUMN salary TYPE NUMERIC(12,2);
+
+-- Rename a column
+ALTER TABLE employees RENAME COLUMN last_name TO surname;
+
+-- Add a constraint after the fact
+ALTER TABLE employees ADD CONSTRAINT chk_sal CHECK (salary >= 1000);</code></pre><div class="msg">ALTER TABLE</div></figure>
+        <p class="topic__note">Use <code>ALTER TABLE</code> as requirements evolve. Each clause targets one change: add/drop columns, retype, rename, or attach/detach constraints.</p>
+      </div>
+      <div class="topic reveal" id="drop-truncate">
+        <h3 class="topic__name"><span class="kw">DROP</span> &amp; <span class="kw">TRUNCATE</span></h3>
+        <p class="topic__lead">Remove a whole table, or empty it out fast.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">DROP TABLE IF EXISTS old_logs;        -- delete the table entirely
+DROP TABLE departments CASCADE;       -- also drop things that depend on it
+
+TRUNCATE TABLE employee_projects;     -- delete ALL rows, keep the table</code></pre></figure>
+        <p class="topic__note"><code>DROP</code> destroys the table structure and its data. <code>TRUNCATE</code> keeps the structure but removes every row &mdash; far faster than <code>DELETE</code> for wiping a table because it does not scan rows one by one. Add <code>IF EXISTS</code> to avoid errors when the object may not be there.</p>
+      </div>
+      <div class="topic reveal" id="index">
+        <h3 class="topic__name"><span class="kw">CREATE INDEX</span></h3>
+        <p class="topic__lead">Builds a lookup structure so the database can find rows quickly.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE INDEX idx_emp_dept ON employees(dept_id);
+CREATE UNIQUE INDEX idx_emp_email ON employees(email);
+DROP INDEX idx_emp_dept;</code></pre><div class="msg">CREATE INDEX</div></figure>
+        <p class="topic__note">Without an index, finding rows means scanning the whole table. An index (usually a B-tree) is like a book's index &mdash; it turns a full read into a direct jump. Index columns you filter or join on often. The trade-off: indexes speed up reads but slightly slow down writes and use disk.</p>
+      </div>
+      <div class="topic reveal" id="view">
+        <h3 class="topic__name"><span class="kw">CREATE VIEW</span></h3>
+        <p class="topic__lead">Saves a query under a name so you can treat it like a virtual table.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE VIEW high_earners AS
+SELECT first_name, salary, dept_id
+FROM employees
+WHERE salary > 70000;
+
+-- Now query it like a table:
+SELECT * FROM high_earners;</code></pre></figure>
+        <p class="topic__note">A view stores no data of its own &mdash; it re-runs its underlying query each time. It's ideal for hiding complex joins behind a simple name, or exposing a limited slice of data. A <code>MATERIALIZED VIEW</code> (below) is the opposite: it caches results.</p>
+      </div>
+      <div class="topic reveal" id="matview">
+        <h3 class="topic__name"><span class="kw">MATERIALIZED VIEW</span></h3>
+        <p class="topic__lead">Like a view, but it physically stores the results for fast repeated reads.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE MATERIALIZED VIEW dept_totals AS
+SELECT dept_id, COUNT(*) AS headcount, SUM(salary) AS payroll
+FROM employees
+GROUP BY dept_id;
+
+REFRESH MATERIALIZED VIEW dept_totals;   -- recompute when data changes</code></pre></figure>
+        <p class="topic__note">A regular view is always live but recomputed on every read. A materialized view is fast to read but can go stale &mdash; you call <code>REFRESH</code> to update it. Great for expensive dashboards/reports that don't need up-to-the-second numbers.</p>
+      </div>
+    </section>
+
+    <section class="block" id="dml">
+      <div class="block__head">
+        <span class="block__tag">DML &middot; Data Manipulation Language</span>
+        <h2 class="block__title">Adding &amp; changing data</h2>
+        <p class="block__intro">DML statements work on the <em>rows</em> inside tables: <code>INSERT</code> adds them, <code>UPDATE</code> changes them, <code>DELETE</code> removes them. Postgres's <code>RETURNING</code> clause lets each one hand back the rows it touched.</p>
+      </div>
+      <div class="topic reveal" id="insert">
+        <h3 class="topic__name"><span class="kw">INSERT</span></h3>
+        <p class="topic__lead">Adds one or more new rows to a table.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Single row, naming the columns (best practice)
+INSERT INTO departments (dept_id, dept_name, location)
+VALUES (50, 'Finance', 'Pune');
+
+-- Multiple rows in one statement
+INSERT INTO departments (dept_id, dept_name, location) VALUES
+  (60, 'Legal', 'Delhi'),
+  (70, 'Support', 'Chennai');</code></pre><div class="msg">INSERT 0 2</div></figure>
+        <p class="topic__note">Always list columns explicitly &mdash; it protects you if the table structure changes later. The server reply <code>INSERT 0 2</code> means two rows were inserted.</p>
+      </div>
+      <div class="topic reveal" id="insert-select">
+        <h3 class="topic__name"><span class="kw">INSERT ... SELECT</span></h3>
+        <p class="topic__lead">Copies rows from a query straight into a table.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">INSERT INTO employees_archive (emp_id, first_name, salary)
+SELECT emp_id, first_name, salary
+FROM employees
+WHERE hire_date < '2020-01-01';</code></pre></figure>
+        <p class="topic__note">Instead of literal <code>VALUES</code>, you feed <code>INSERT</code> the output of a <code>SELECT</code>. Perfect for archiving, backfilling, or copying subsets between tables.</p>
+      </div>
+      <div class="topic reveal" id="returning">
+        <h3 class="topic__name"><span class="kw">RETURNING</span> <span style="color:var(--amber-deep);font-size:.7rem;font-family:var(--font-body)">Postgres feature</span></h3>
+        <p class="topic__lead">Get back the rows an INSERT/UPDATE/DELETE just affected &mdash; including generated IDs.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">INSERT INTO employees (first_name, salary, dept_id)
+VALUES ('Meera', 65000, 10)
+RETURNING emp_id, first_name;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>emp_id</th><th>first_name</th></tr></thead><tbody><tr><td class="num">9</td><td>Meera</td></tr></tbody></table><div class="rset__count">(1 row)</div></div></figure>
+        <p class="topic__note">Without <code>RETURNING</code> you'd need a second query to learn the new auto-generated <code>emp_id</code>. This gives it to you in one round trip &mdash; a big win in application code.</p>
+      </div>
+      <div class="topic reveal" id="upsert">
+        <h3 class="topic__name"><span class="kw">INSERT ... ON CONFLICT</span> (upsert)</h3>
+        <p class="topic__lead">Insert a row, but if it clashes with an existing one, update instead. "Update-or-insert" = upsert.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">INSERT INTO departments (dept_id, dept_name, location)
+VALUES (10, 'Engineering', 'Hyderabad')
+ON CONFLICT (dept_id)
+DO UPDATE SET location = EXCLUDED.location;
+
+-- Or simply skip duplicates:
+INSERT INTO departments (dept_id, dept_name)
+VALUES (10, 'Engineering')
+ON CONFLICT (dept_id) DO NOTHING;</code></pre></figure>
+        <p class="topic__note">When a row with <code>dept_id = 10</code> already exists, the insert would normally fail on the primary-key conflict. <code>ON CONFLICT</code> catches that: <code>DO UPDATE</code> merges the new values (<code>EXCLUDED</code> refers to the row you tried to insert), or <code>DO NOTHING</code> silently skips it.</p>
+      </div>
+      <div class="topic reveal" id="update">
+        <h3 class="topic__name"><span class="kw">UPDATE</span></h3>
+        <p class="topic__lead">Changes values in existing rows. Almost always with a <code>WHERE</code>.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Give everyone in Engineering a 10% raise
+UPDATE employees
+SET salary = salary * 1.10
+WHERE dept_id = 10;</code></pre><div class="msg">UPDATE 3</div></figure>
+        <p class="callout"><b>Danger:</b> an <code>UPDATE</code> with no <code>WHERE</code> changes <em>every row in the table</em>. The same is true of <code>DELETE</code>. Always double-check your <code>WHERE</code> clause.</p>
+      </div>
+      <div class="topic reveal" id="update-from">
+        <h3 class="topic__name"><span class="kw">UPDATE ... FROM</span></h3>
+        <p class="topic__lead">Update rows using values looked up from another table.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Reassign every Bangalore-based employee to HR
+UPDATE employees e
+SET dept_id = 40
+FROM departments d
+WHERE e.dept_id = d.dept_id
+  AND d.location = 'Bangalore';</code></pre></figure>
+        <p class="topic__note">The <code>FROM</code> clause joins another table into the update so its columns can drive the change &mdash; Postgres's clean way to do "update based on a join".</p>
+      </div>
+      <div class="topic reveal" id="delete">
+        <h3 class="topic__name"><span class="kw">DELETE</span></h3>
+        <p class="topic__lead">Removes rows that match a condition.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">DELETE FROM employees
+WHERE emp_id = 8
+RETURNING first_name;      -- confirm who was removed</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th></tr></thead><tbody><tr><td>Karan</td></tr></tbody></table><div class="rset__count">DELETE 1</div></div></figure>
+        <p class="topic__note"><code>DELETE</code> removes whole rows (to blank out a single field, use <code>UPDATE ... SET col = NULL</code> instead). To empty an entire table quickly, prefer <code>TRUNCATE</code>.</p>
+      </div>
+    </section>
+    <section class="block" id="select">
+      <div class="block__head">
+        <span class="block__tag">DQL &middot; Data Query Language</span>
+        <h2 class="block__title">SELECT &mdash; asking questions</h2>
+        <p class="block__intro"><code>SELECT</code> is the heart of SQL and the one you'll write most. It reads data without changing it. Master its clauses &mdash; <code>WHERE</code>, <code>ORDER BY</code>, <code>GROUP BY</code>, <code>HAVING</code> &mdash; and you can answer almost any question about your data.</p>
+      </div>
+      <div class="topic reveal" id="select-basic">
+        <h3 class="topic__name"><span class="kw">SELECT</span> basics</h3>
+        <p class="topic__lead">Choose columns, rename them, and compute new ones.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT first_name,
+       salary,
+       salary * 12 AS annual_salary,       -- computed column + alias
+       first_name || ' ' || last_name AS full_name  -- || joins strings
+FROM employees;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>salary</th><th>annual_salary</th><th>full_name</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td class="num">95000</td><td class="num">1140000</td><td>Asha Rao</td></tr>
+            <tr><td>Vikram</td><td class="num">72000</td><td class="num">864000</td><td>Vikram Nair</td></tr>
+            <tr><td>&hellip;</td><td>&hellip;</td><td>&hellip;</td><td>&hellip;</td></tr>
+          </tbody></table><div class="rset__count">(8 rows)</div></div></figure>
+        <p class="topic__note"><code>SELECT *</code> grabs all columns; naming them is clearer and faster. <code>AS</code> gives a column a friendly alias. You can compute values (<code>salary * 12</code>) and concatenate text with <code>||</code>.</p>
+      </div>
+      <div class="topic reveal" id="where">
+        <h3 class="topic__name"><span class="kw">WHERE</span> &mdash; filtering rows</h3>
+        <p class="topic__lead">Keep only the rows that meet a condition.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT first_name, salary, dept_id
+FROM employees
+WHERE dept_id = 10 AND salary > 70000;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>salary</th><th>dept_id</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td class="num">95000</td><td class="num">10</td></tr>
+            <tr><td>Vikram</td><td class="num">72000</td><td class="num">10</td></tr>
+          </tbody></table><div class="rset__count">(2 rows)</div></div></figure>
+        <p class="topic__note">Comparison operators: <code>=</code> &nbsp;<code>&lt;&gt;</code> (not equal) &nbsp;<code>&lt;</code> &nbsp;<code>&gt;</code> &nbsp;<code>&lt;=</code> &nbsp;<code>&gt;=</code>. Combine conditions with <code>AND</code>, <code>OR</code>, and <code>NOT</code>.</p>
+      </div>
+      <div class="topic reveal" id="where-operators">
+        <h3 class="topic__name">BETWEEN &middot; IN &middot; LIKE &middot; IS NULL</h3>
+        <p class="topic__lead">Expressive filters for ranges, lists, patterns, and missing values.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Range (inclusive)
+WHERE salary BETWEEN 50000 AND 70000
+
+-- Match any value in a list
+WHERE dept_id IN (10, 20)
+
+-- Pattern match: % = any chars, _ = one char.  ILIKE = case-insensitive
+WHERE email LIKE '%@ex.com'
+WHERE first_name ILIKE 'a%'
+
+-- Missing values: never use = NULL, always IS NULL
+WHERE manager_id IS NULL</code></pre></figure>
+        <p class="topic__note"><code>NULL</code> means "unknown", so <code>manager_id = NULL</code> is never true &mdash; you must write <code>IS NULL</code> / <code>IS NOT NULL</code>. <code>LIKE</code> patterns use <code>%</code> (zero or more characters) and <code>_</code> (exactly one).</p>
+      </div>
+      <div class="topic reveal" id="order-limit">
+        <h3 class="topic__name"><span class="kw">ORDER BY</span> &middot; <span class="kw">LIMIT</span> &middot; <span class="kw">OFFSET</span></h3>
+        <p class="topic__lead">Sort the results and take just a slice (the basis of pagination).</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT first_name, salary
+FROM employees
+ORDER BY salary DESC     -- highest first (ASC is the default)
+LIMIT 3 OFFSET 0;        -- first 3 rows; OFFSET 3 would be the next page</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>salary</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td class="num">95000</td></tr>
+            <tr><td>Rahul</td><td class="num">88000</td></tr>
+            <tr><td>Vikram</td><td class="num">72000</td></tr>
+          </tbody></table><div class="rset__count">(3 rows)</div></div></figure>
+        <p class="topic__note"><code>ORDER BY col DESC</code> sorts descending; add more columns for tie-breakers. <code>LIMIT</code> caps the row count; <code>OFFSET</code> skips ahead &mdash; together they page through large result sets.</p>
+      </div>
+      <div class="topic reveal" id="distinct">
+        <h3 class="topic__name"><span class="kw">DISTINCT</span></h3>
+        <p class="topic__lead">Removes duplicate rows from the result.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT DISTINCT dept_id FROM employees;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>dept_id</th></tr></thead><tbody><tr><td class="num">10</td></tr><tr><td class="num">20</td></tr><tr><td class="num">30</td></tr><tr><td class="null">NULL</td></tr></tbody></table><div class="rset__count">(4 rows)</div></div></figure>
+        <p class="topic__note">Eight employees, but only four distinct department values. <code>DISTINCT</code> collapses repeats. Postgres also has <code>DISTINCT ON (col)</code> to keep the first row per group.</p>
+      </div>
+      <div class="topic reveal" id="aggregates">
+        <h3 class="topic__name">Aggregate functions</h3>
+        <p class="topic__lead"><code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code> &mdash; collapse many rows into one summary number.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT COUNT(*)      AS num_employees,
+       SUM(salary)   AS total_payroll,
+       ROUND(AVG(salary),2) AS avg_salary,
+       MIN(salary)   AS lowest,
+       MAX(salary)   AS highest
+FROM employees;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>num_employees</th><th>total_payroll</th><th>avg_salary</th><th>lowest</th><th>highest</th></tr></thead>
+          <tbody><tr><td class="num">8</td><td class="num">545000</td><td class="num">68125.00</td><td class="num">49000</td><td class="num">95000</td></tr></tbody></table><div class="rset__count">(1 row)</div></div></figure>
+        <p class="topic__note">Aggregates turn a set of rows into a single value. <code>COUNT(*)</code> counts rows; <code>COUNT(col)</code> ignores <code>NULL</code>s in that column. They're most powerful with <code>GROUP BY</code>.</p>
+      </div>
+      <div class="topic reveal" id="group-by">
+        <h3 class="topic__name"><span class="kw">GROUP BY</span></h3>
+        <p class="topic__lead">Split rows into groups and aggregate each group separately.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT dept_id,
+       COUNT(*)             AS headcount,
+       ROUND(AVG(salary),0) AS avg_salary
+FROM employees
+GROUP BY dept_id
+ORDER BY dept_id;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>dept_id</th><th>headcount</th><th>avg_salary</th></tr></thead>
+          <tbody>
+            <tr><td class="num">10</td><td class="num">3</td><td class="num">78333</td></tr>
+            <tr><td class="num">20</td><td class="num">2</td><td class="num">71000</td></tr>
+            <tr><td class="num">30</td><td class="num">2</td><td class="num">55000</td></tr>
+            <tr><td class="null">NULL</td><td class="num">1</td><td class="num">58000</td></tr>
+          </tbody></table><div class="rset__count">(4 rows)</div></div></figure>
+        <p class="topic__note">One output row per group. The rule: every column in <code>SELECT</code> must either appear in <code>GROUP BY</code> or be wrapped in an aggregate. Here we get per-department headcount and average pay.</p>
+      </div>
+      <div class="topic reveal" id="having">
+        <h3 class="topic__name"><span class="kw">HAVING</span> vs <span class="kw">WHERE</span></h3>
+        <p class="topic__lead">Filter <em>groups</em> after aggregation. (<code>WHERE</code> filters rows before.)</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT dept_id, COUNT(*) AS headcount
+FROM employees
+WHERE dept_id IS NOT NULL     -- filters rows BEFORE grouping
+GROUP BY dept_id
+HAVING COUNT(*) >= 2;         -- filters groups AFTER aggregating</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>dept_id</th><th>headcount</th></tr></thead>
+          <tbody><tr><td class="num">10</td><td class="num">3</td></tr><tr><td class="num">20</td><td class="num">2</td></tr><tr><td class="num">30</td><td class="num">2</td></tr></tbody></table><div class="rset__count">(3 rows)</div></div></figure>
+        <p class="callout tip"><b>Key distinction:</b> <code>WHERE</code> can't use aggregates because it runs <em>before</em> grouping. To filter on <code>COUNT()</code>, <code>SUM()</code>, etc., you must use <code>HAVING</code>, which runs <em>after</em>.</p>
+      </div>
+      <div class="topic reveal" id="case">
+        <h3 class="topic__name"><span class="kw">CASE</span> &mdash; if/then in SQL</h3>
+        <p class="topic__lead">Produce different values per row based on conditions.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT first_name, salary,
+  CASE
+    WHEN salary >= 80000 THEN 'Senior'
+    WHEN salary >= 60000 THEN 'Mid'
+    ELSE 'Junior'
+  END AS band
+FROM employees;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>salary</th><th>band</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td class="num">95000</td><td>Senior</td></tr>
+            <tr><td>Priya</td><td class="num">68000</td><td>Mid</td></tr>
+            <tr><td>Divya</td><td class="num">49000</td><td>Junior</td></tr>
+          </tbody></table><div class="rset__count">(8 rows)</div></div></figure>
+        <p class="topic__note"><code>CASE</code> is SQL's if/else. It checks each <code>WHEN</code> in order and returns the first match's value, falling back to <code>ELSE</code>. Useful for bucketing, labelling, and conditional aggregation.</p>
+      </div>
+      <div class="topic reveal" id="null-functions">
+        <h3 class="topic__name">COALESCE &amp; NULLIF</h3>
+        <p class="topic__lead">Handle missing values gracefully.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Show a default when manager_id is NULL
+SELECT first_name,
+       COALESCE(manager_id::TEXT, 'no manager') AS reports_to
+FROM employees;
+
+-- Turn a specific value into NULL (e.g. avoid divide-by-zero)
+SELECT revenue / NULLIF(orders, 0) AS avg_order_value FROM sales;</code></pre></figure>
+        <p class="topic__note"><code>COALESCE(a, b, ...)</code> returns the first non-<code>NULL</code> argument &mdash; perfect for default values. <code>NULLIF(a, b)</code> returns <code>NULL</code> when <code>a = b</code>, a classic trick to sidestep division by zero.</p>
+      </div>
+      <div class="topic reveal" id="functions">
+        <h3 class="topic__name">Handy string &amp; date functions</h3>
+        <p class="topic__lead">Common built-ins you'll reach for constantly.</p>
+        <table class="dtable"><thead><tr><th style="width:38%">Function</th><th>Result</th></tr></thead>
+          <tbody>
+            <tr><td>UPPER('sql') / LOWER('SQL')</td><td><code>'SQL'</code> / <code>'sql'</code></td></tr>
+            <tr><td>LENGTH('hello')</td><td><code>5</code></td></tr>
+            <tr><td>TRIM('  hi  ')</td><td><code>'hi'</code> (strips surrounding spaces)</td></tr>
+            <tr><td>SUBSTRING('postgres',1,4)</td><td><code>'post'</code></td></tr>
+            <tr><td>REPLACE('a-b-c','-','_')</td><td><code>'a_b_c'</code></td></tr>
+            <tr><td>CURRENT_DATE / NOW()</td><td>Today's date / current timestamp</td></tr>
+            <tr><td>AGE(hire_date)</td><td>Interval since a date, e.g. <code>5 years 3 mons</code></td></tr>
+            <tr><td>EXTRACT(YEAR FROM hire_date)</td><td>Pulls one field out, e.g. <code>2019</code></td></tr>
+            <tr><td>TO_CHAR(NOW(),'YYYY-MM-DD')</td><td>Format a date/number as text</td></tr>
+            <tr><td>ROUND(x,2) / CEIL(x) / FLOOR(x)</td><td>Round / round up / round down</td></tr>
+          </tbody></table>
+      </div>
+    </section>
+
+    <section class="block" id="joins">
+      <div class="block__head">
+        <span class="block__tag">Relational power &middot; combining tables</span>
+        <h2 class="block__title">JOINs</h2>
+        <p class="block__intro">Data is split across tables to avoid repetition. Joins stitch them back together on a shared column &mdash; here, matching <code>employees.dept_id</code> to <code>departments.dept_id</code>. The join <em>type</em> decides what happens to rows that have no match.</p>
+      </div>
+      <div class="topic reveal" id="join-visual">
+        <h4 style="margin-top:0">The four main joins at a glance</h4>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">summary</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="plain">INNER JOIN   only rows that match in BOTH tables
+LEFT  JOIN   ALL left rows + matches from right (NULLs where none)
+RIGHT JOIN   ALL right rows + matches from left (NULLs where none)
+FULL  JOIN   ALL rows from both sides (NULLs on either where none)</code></pre></figure>
+      </div>
+      <div class="topic reveal" id="inner-join">
+        <h3 class="topic__name"><span class="kw">INNER JOIN</span></h3>
+        <p class="topic__lead">Returns only rows that have a match in both tables.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT e.first_name, d.dept_name
+FROM employees e
+INNER JOIN departments d ON e.dept_id = d.dept_id
+ORDER BY e.first_name;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>dept_name</th></tr></thead>
+          <tbody>
+            <tr><td>Arjun</td><td>Marketing</td></tr>
+            <tr><td>Asha</td><td>Engineering</td></tr>
+            <tr><td>Divya</td><td>Marketing</td></tr>
+            <tr><td>&hellip;</td><td>&hellip;</td></tr>
+          </tbody></table><div class="rset__count">(7 rows) &mdash; Karan is excluded: no dept_id to match.</div></div></figure>
+        <p class="topic__note">Karan (no department) and HR (no employees) both vanish, because <code>INNER JOIN</code> keeps only matched pairs. Table aliases (<code>e</code>, <code>d</code>) keep the query short and unambiguous.</p>
+      </div>
+      <div class="topic reveal" id="left-join">
+        <h3 class="topic__name"><span class="kw">LEFT JOIN</span></h3>
+        <p class="topic__lead">Keeps every row from the left table, filling <code>NULL</code> where the right has no match.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT e.first_name, d.dept_name
+FROM employees e
+LEFT JOIN departments d ON e.dept_id = d.dept_id
+ORDER BY e.emp_id;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>dept_name</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td>Engineering</td></tr>
+            <tr><td>&hellip;</td><td>&hellip;</td></tr>
+            <tr><td>Karan</td><td class="null">NULL</td></tr>
+          </tbody></table><div class="rset__count">(8 rows) &mdash; Karan now appears, with NULL department.</div></div></figure>
+        <p class="topic__note">This is the most-used join. All 8 employees appear; Karan's department shows <code>NULL</code> because he has none. Great for "show everything, matched or not" &mdash; and for finding unmatched rows by adding <code>WHERE d.dept_id IS NULL</code>.</p>
+      </div>
+      <div class="topic reveal" id="right-full-join">
+        <h3 class="topic__name"><span class="kw">RIGHT</span> &amp; <span class="kw">FULL OUTER JOIN</span></h3>
+        <p class="topic__lead">Mirror image of LEFT, and the union of both.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Every DEPARTMENT, even those with no employees (HR appears)
+SELECT e.first_name, d.dept_name
+FROM employees e
+RIGHT JOIN departments d ON e.dept_id = d.dept_id;
+
+-- Everything from BOTH sides
+SELECT e.first_name, d.dept_name
+FROM employees e
+FULL OUTER JOIN departments d ON e.dept_id = d.dept_id;</code></pre></figure>
+        <p class="topic__note"><code>RIGHT JOIN</code> keeps all rows from the right table (so HR, with no staff, shows up with a <code>NULL</code> employee). <code>FULL OUTER JOIN</code> keeps unmatched rows from <em>both</em> sides &mdash; Karan (no dept) and HR (no staff) both appear.</p>
+      </div>
+      <div class="topic reveal" id="self-join">
+        <h3 class="topic__name">SELF JOIN</h3>
+        <p class="topic__lead">Join a table to itself &mdash; here, matching each employee to their manager.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT e.first_name       AS employee,
+       m.first_name       AS manager
+FROM employees e
+LEFT JOIN employees m ON e.manager_id = m.emp_id;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>employee</th><th>manager</th></tr></thead>
+          <tbody>
+            <tr><td>Vikram</td><td>Asha</td></tr>
+            <tr><td>Priya</td><td>Asha</td></tr>
+            <tr><td>Sneha</td><td>Rahul</td></tr>
+            <tr><td>Asha</td><td class="null">NULL</td></tr>
+          </tbody></table><div class="rset__count">(8 rows)</div></div></figure>
+        <p class="topic__note">The same table is referenced twice with two aliases (<code>e</code> = employee, <code>m</code> = manager). This resolves hierarchies stored in one table. Using <code>LEFT JOIN</code> keeps top-level people (managers with no manager) in the result.</p>
+      </div>
+      <div class="topic reveal" id="multi-join">
+        <h3 class="topic__name">Joining 3+ tables</h3>
+        <p class="topic__lead">Chain joins to combine employees, projects, and the junction table.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT e.first_name, p.project_name, ep.hours
+FROM employees e
+JOIN employee_projects ep ON e.emp_id = ep.emp_id
+JOIN projects p          ON ep.project_id = p.project_id
+ORDER BY e.first_name;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>project_name</th><th>hours</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td>Apollo</td><td class="num">120</td></tr>
+            <tr><td>Vikram</td><td>Apollo</td><td class="num">200</td></tr>
+            <tr><td>Vikram</td><td>Mercury</td><td class="num">80</td></tr>
+            <tr><td>&hellip;</td><td>&hellip;</td><td>&hellip;</td></tr>
+          </tbody></table><div class="rset__count">(6 rows)</div></div></figure>
+        <p class="topic__note">Many-to-many relationships (employees &harr; projects) are resolved through a junction table. You join across all three, matching each key in turn. (<code>JOIN</code> with no prefix means <code>INNER JOIN</code>.)</p>
+      </div>
+    </section>
+    <section class="block" id="subqueries">
+      <div class="block__head">
+        <span class="block__tag">Queries inside queries</span>
+        <h2 class="block__title">Subqueries &amp; CTEs</h2>
+        <p class="block__intro">A subquery is a <code>SELECT</code> nested inside another statement. CTEs (Common Table Expressions, the <code>WITH</code> clause) do the same job but read top-to-bottom, making complex logic far clearer.</p>
+      </div>
+      <div class="topic reveal" id="scalar-subquery">
+        <h3 class="topic__name">Subquery in WHERE</h3>
+        <p class="topic__lead">Use one query's result to filter another.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Employees earning above the company average
+SELECT first_name, salary
+FROM employees
+WHERE salary > (SELECT AVG(salary) FROM employees);</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>salary</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td class="num">95000</td></tr>
+            <tr><td>Vikram</td><td class="num">72000</td></tr>
+            <tr><td>Rahul</td><td class="num">88000</td></tr>
+          </tbody></table><div class="rset__count">(3 rows) &mdash; avg is 68125</div></div></figure>
+        <p class="topic__note">The inner query computes one value (the average, 68125), and the outer query compares against it. This "scalar subquery" runs first, then feeds the <code>WHERE</code>.</p>
+      </div>
+      <div class="topic reveal" id="exists">
+        <h3 class="topic__name">IN &middot; EXISTS &middot; correlated subqueries</h3>
+        <p class="topic__lead">Test membership, or check "does a related row exist?"</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Departments that actually have employees (IN with a subquery)
+SELECT dept_name FROM departments
+WHERE dept_id IN (SELECT dept_id FROM employees);
+
+-- Same idea with EXISTS (often faster) -- a CORRELATED subquery:
+-- the inner query references the outer row (d.dept_id)
+SELECT dept_name FROM departments d
+WHERE EXISTS (
+  SELECT 1 FROM employees e WHERE e.dept_id = d.dept_id
+);</code></pre></figure>
+        <p class="topic__note"><code>IN (subquery)</code> checks whether a value is in a returned list. <code>EXISTS</code> checks only whether the inner query returns <em>any</em> row (it stops at the first). A <em>correlated</em> subquery runs once per outer row because it depends on that row's values.</p>
+      </div>
+      <div class="topic reveal" id="cte">
+        <h3 class="topic__name"><span class="kw">WITH</span> &mdash; Common Table Expression</h3>
+        <p class="topic__lead">Name a subquery up front, then use it like a table. Cleaner than nesting.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">WITH dept_avg AS (
+    SELECT dept_id, AVG(salary) AS avg_sal
+    FROM employees
+    GROUP BY dept_id
+)
+SELECT e.first_name, e.salary, d.avg_sal
+FROM employees e
+JOIN dept_avg d ON e.dept_id = d.dept_id
+WHERE e.salary > d.avg_sal;      -- earns above their dept's average</code></pre></figure>
+        <p class="topic__note">The <code>WITH</code> block defines <code>dept_avg</code> once; the main query joins to it by name. CTEs make multi-step logic readable and let you reference the same intermediate result multiple times.</p>
+      </div>
+      <div class="topic reveal" id="recursive-cte">
+        <h3 class="topic__name"><span class="kw">WITH RECURSIVE</span></h3>
+        <p class="topic__lead">A CTE that refers to itself &mdash; for hierarchies and sequences.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Walk the management chain under Asha (emp_id 1)
+WITH RECURSIVE org AS (
+    SELECT emp_id, first_name, manager_id, 1 AS level
+    FROM employees WHERE emp_id = 1          -- anchor: the top
+  UNION ALL
+    SELECT e.emp_id, e.first_name, e.manager_id, o.level + 1
+    FROM employees e
+    JOIN org o ON e.manager_id = o.emp_id    -- recursive step
+)
+SELECT level, first_name FROM org;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>level</th><th>first_name</th></tr></thead>
+          <tbody><tr><td class="num">1</td><td>Asha</td></tr><tr><td class="num">2</td><td>Vikram</td></tr><tr><td class="num">2</td><td>Priya</td></tr></tbody></table><div class="rset__count">(3 rows)</div></div></figure>
+        <p class="topic__note">A recursive CTE has two parts joined by <code>UNION ALL</code>: an <em>anchor</em> (the starting rows) and a <em>recursive</em> member that references the CTE itself, running repeatedly until no new rows appear. This is how you traverse org charts, category trees, and graphs.</p>
+      </div>
+    </section>
+
+    <section class="block" id="setops">
+      <div class="block__head">
+        <span class="block__tag">Combining result sets vertically</span>
+        <h2 class="block__title">Set operations</h2>
+        <p class="block__intro">Where joins combine tables side by side (more columns), set operations stack query results on top of each other (more rows). Both queries must return the same number and types of columns.</p>
+      </div>
+      <div class="topic reveal" id="union">
+        <h3 class="topic__name"><span class="kw">UNION</span> &middot; <span class="kw">INTERSECT</span> &middot; <span class="kw">EXCEPT</span></h3>
+        <p class="topic__lead">Combine, intersect, or subtract two result sets.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- UNION: all locations from both queries, duplicates removed
+SELECT location FROM departments
+UNION
+SELECT 'Remote';
+
+-- UNION ALL keeps duplicates (and is faster)
+-- INTERSECT: rows present in BOTH queries
+SELECT dept_id FROM employees
+INTERSECT
+SELECT dept_id FROM projects;
+
+-- EXCEPT: rows in the first query but NOT the second
+SELECT dept_id FROM departments
+EXCEPT
+SELECT dept_id FROM employees;     -- departments with no employees</code></pre></figure>
+        <p class="topic__note"><code>UNION</code> merges and removes duplicates; <code>UNION ALL</code> keeps every row (use it when you know there are no dupes &mdash; it skips the sort). <code>INTERSECT</code> keeps only rows in both. <code>EXCEPT</code> subtracts the second set from the first &mdash; here, finding departments (like HR, 40) that have no employees.</p>
+      </div>
+    </section>
+
+    <section class="block" id="windows">
+      <div class="block__head">
+        <span class="block__tag">Advanced analytics &middot; rankings &amp; running totals</span>
+        <h2 class="block__title">Window functions</h2>
+        <p class="block__intro">A window function computes across a set of rows <em>related to the current row</em> &mdash; but unlike <code>GROUP BY</code>, it does <strong>not</strong> collapse them. You keep every row and get an extra analytical column: a rank, a running total, the previous row's value.</p>
+      </div>
+      <div class="topic reveal" id="ranking">
+        <h3 class="topic__name">ROW_NUMBER &middot; RANK &middot; DENSE_RANK</h3>
+        <p class="topic__lead">Number or rank rows within partitions.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT first_name, dept_id, salary,
+   RANK() OVER (PARTITION BY dept_id ORDER BY salary DESC) AS dept_rank
+FROM employees;</code></pre>
+        <div class="result"><table class="rset"><thead><tr><th>first_name</th><th>dept_id</th><th>salary</th><th>dept_rank</th></tr></thead>
+          <tbody>
+            <tr><td>Asha</td><td class="num">10</td><td class="num">95000</td><td class="num">1</td></tr>
+            <tr><td>Vikram</td><td class="num">10</td><td class="num">72000</td><td class="num">2</td></tr>
+            <tr><td>Priya</td><td class="num">10</td><td class="num">68000</td><td class="num">3</td></tr>
+            <tr><td>Rahul</td><td class="num">20</td><td class="num">88000</td><td class="num">1</td></tr>
+            <tr><td>Sneha</td><td class="num">20</td><td class="num">54000</td><td class="num">2</td></tr>
+          </tbody></table><div class="rset__count">(8 rows)</div></div></figure>
+        <p class="topic__note"><code>OVER (PARTITION BY dept_id ...)</code> restarts the ranking for each department. <code>ROW_NUMBER</code> always gives unique 1,2,3; <code>RANK</code> leaves gaps after ties (1,1,3); <code>DENSE_RANK</code> doesn't (1,1,2). Classic use: "top 3 earners per department".</p>
+      </div>
+      <div class="topic reveal" id="running-total">
+        <h3 class="topic__name">Running totals &amp; LAG/LEAD</h3>
+        <p class="topic__lead">Aggregate cumulatively, or peek at neighbouring rows.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT first_name, salary,
+   SUM(salary) OVER (ORDER BY emp_id) AS running_total,
+   LAG(salary)  OVER (ORDER BY emp_id) AS prev_salary
+FROM employees;</code></pre></figure>
+        <p class="topic__note">An aggregate like <code>SUM()</code> with an <code>OVER (ORDER BY ...)</code> becomes a <em>running total</em> &mdash; it accumulates down the rows instead of collapsing them. <code>LAG</code> fetches a value from a previous row (and <code>LEAD</code> from a following one), ideal for period-over-period comparisons.</p>
+      </div>
+    </section>
+
+    <section class="block" id="transactions">
+      <div class="block__head">
+        <span class="block__tag">TCL &middot; Transaction Control Language</span>
+        <h2 class="block__title">Transactions</h2>
+        <p class="block__intro">A transaction groups several statements into one all-or-nothing unit. Either every change commits together, or none do. This is what keeps a bank transfer from debiting one account without crediting the other.</p>
+      </div>
+      <div class="topic reveal" id="begin-commit">
+        <h3 class="topic__name"><span class="kw">BEGIN</span> &middot; <span class="kw">COMMIT</span> &middot; <span class="kw">ROLLBACK</span></h3>
+        <p class="topic__lead">Start a transaction, then either save or undo all its work.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">BEGIN;                                        -- start the transaction
+
+UPDATE accounts SET balance = balance - 500 WHERE id = 1;
+UPDATE accounts SET balance = balance + 500 WHERE id = 2;
+
+COMMIT;      -- make both changes permanent together
+-- ROLLBACK; -- ...or undo EVERYTHING since BEGIN if something went wrong</code></pre></figure>
+        <p class="topic__note">Between <code>BEGIN</code> and <code>COMMIT</code>, changes are provisional and invisible to others. <code>COMMIT</code> makes them permanent atomically; <code>ROLLBACK</code> discards them entirely. If the money leaves account 1 but the second update fails, you roll back and nothing changed &mdash; that's atomicity.</p>
+      </div>
+      <div class="topic reveal" id="savepoint">
+        <h3 class="topic__name"><span class="kw">SAVEPOINT</span></h3>
+        <p class="topic__lead">A checkpoint you can roll back to without abandoning the whole transaction.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">BEGIN;
+INSERT INTO departments VALUES (80, 'Design', 'Goa');
+SAVEPOINT sp1;
+INSERT INTO departments VALUES (80, 'Duplicate', 'X');  -- fails: PK clash
+ROLLBACK TO sp1;         -- undo only the bad insert, keep the good one
+COMMIT;                  -- Design still gets saved</code></pre></figure>
+        <p class="topic__note">Savepoints give you partial rollback inside a transaction. <code>ROLLBACK TO sp1</code> rewinds to the checkpoint without throwing away everything before it &mdash; useful for retrying part of a complex operation.</p>
+      </div>
+    </section>
+
+    <section class="block" id="dcl">
+      <div class="block__head">
+        <span class="block__tag">DCL &middot; Data Control Language</span>
+        <h2 class="block__title">Permissions</h2>
+        <p class="block__intro">DCL controls <em>who can do what</em>. You create roles (users/groups) and then grant or revoke privileges on database objects &mdash; the foundation of database security.</p>
+      </div>
+      <div class="topic reveal" id="grant-revoke">
+        <h3 class="topic__name"><span class="kw">CREATE ROLE</span> &middot; <span class="kw">GRANT</span> &middot; <span class="kw">REVOKE</span></h3>
+        <p class="topic__lead">Define a user and control their access.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">-- Create a login role
+CREATE ROLE analyst WITH LOGIN PASSWORD 'secret';
+
+-- Let them read employees, and read/write projects
+GRANT SELECT ON employees TO analyst;
+GRANT SELECT, INSERT, UPDATE ON projects TO analyst;
+
+-- Take a privilege back
+REVOKE INSERT ON projects FROM analyst;</code></pre></figure>
+        <p class="topic__note"><code>GRANT</code> gives privileges (<code>SELECT</code>, <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>, and more) on an object to a role; <code>REVOKE</code> removes them. Roles can also be granted to other roles to build groups. Follow the principle of least privilege: give each role only what it needs.</p>
+      </div>
+    </section>
+
+    <section class="block" id="extras">
+      <div class="block__head">
+        <span class="block__tag">Beyond the basics &middot; why teams pick Postgres</span>
+        <h2 class="block__title">PostgreSQL extras</h2>
+        <p class="block__intro">A few features that make PostgreSQL stand out &mdash; native arrays, first-class JSON, and tools to understand query performance.</p>
+      </div>
+      <div class="topic reveal" id="arrays">
+        <h3 class="topic__name">Arrays</h3>
+        <p class="topic__lead">A column can hold a list of values.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE TABLE articles (id SERIAL, title TEXT, tags TEXT[]);
+INSERT INTO articles (title, tags)
+VALUES ('SQL Basics', ARRAY['sql','database','beginner']);
+
+SELECT title FROM articles WHERE 'sql' = ANY(tags);  -- tag membership</code></pre></figure>
+        <p class="topic__note">Arrays store multiple values in one field. <code>ANY(tags)</code> tests membership, and you can index elements with <code>tags[1]</code> (Postgres arrays are 1-based).</p>
+      </div>
+      <div class="topic reveal" id="jsonb">
+        <h3 class="topic__name">JSON / JSONB</h3>
+        <p class="topic__lead">Store and query structured documents natively.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">CREATE TABLE profiles (id SERIAL, data JSONB);
+INSERT INTO profiles (data)
+VALUES ('{"name":"Asha","skills":["sql","aws"],"active":true}');
+
+SELECT data ->> 'name'   AS name,     -- ->> returns text
+       data ->  'skills' AS skills    -- ->  returns JSON
+FROM profiles
+WHERE data @> '{"active":true}';      -- @> means "contains"</code></pre></figure>
+        <p class="topic__note"><code>JSONB</code> stores JSON in a binary, indexable form. Operators: <code>-&gt;</code> gets a JSON value, <code>-&gt;&gt;</code> gets it as text, and <code>@&gt;</code> tests containment. This blends relational and document-style data in one place.</p>
+      </div>
+      <div class="topic reveal" id="explain">
+        <h3 class="topic__name"><span class="kw">EXPLAIN ANALYZE</span></h3>
+        <p class="topic__lead">See exactly how Postgres will run a query &mdash; and how long it took.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">EXPLAIN ANALYZE
+SELECT * FROM employees WHERE dept_id = 10;</code></pre>
+        <div class="msg">Seq Scan on employees (cost=0.00..1.10 rows=3) (actual time=0.01..0.02 rows=3)</div></figure>
+        <p class="topic__note">The query planner picks a strategy (sequential scan, index scan, hash join, ...). <code>EXPLAIN</code> shows the plan and its estimated cost; adding <code>ANALYZE</code> actually runs it and reports real timings. If you see a slow <code>Seq Scan</code> on a big table, that's often a sign you need an index.</p>
+      </div>
+      <div class="topic reveal" id="casting">
+        <h3 class="topic__name">Type casting with <code>::</code></h3>
+        <p class="topic__lead">Convert a value from one type to another.</p>
+        <figure class="code"><figcaption class="code__cap"><span class="code__dots"><i></i><i></i><i></i><span class="code__lang">SQL</span></span><button class="code__copy" type="button">Copy</button></figcaption>
+        <pre><code class="sql">SELECT '2024-01-15'::DATE,          -- text to date
+       '42'::INT,                   -- text to integer
+       salary::TEXT,                -- number to text
+       CAST(salary AS INT)          -- standard SQL syntax
+FROM employees;</code></pre></figure>
+        <p class="topic__note"><code>value::TYPE</code> is Postgres's shorthand for the standard <code>CAST(value AS TYPE)</code>. You'll use it constantly &mdash; formatting numbers as text, parsing dates, or aligning types so an operation works.</p>
+      </div>
+    </section>
+    <section class="block" id="glossary">
+      <div class="block__head">
+        <span class="block__tag">Concepts &middot; the vocabulary behind the syntax</span>
+        <h2 class="block__title">DBMS glossary</h2>
+        <p class="block__intro">The important terms every database developer should know, in plain English &mdash; the ideas that turn SQL syntax into real understanding. Use the search box to jump to any term.</p>
+      </div>
+
+      <h3 class="subhead">Core &amp; structural</h3>
+      <div class="terms">
+        <div class="term reveal"><h5>Database</h5><p class="one">An organized collection of data.</p><p>A structured set of related data stored electronically so it can be easily accessed, managed, and updated.</p></div>
+        <div class="term reveal"><h5>DBMS</h5><p class="one">Database Management System.</p><p>The software that stores, retrieves, and manages databases (e.g. PostgreSQL, MySQL, Oracle). It sits between users and the raw data files.</p></div>
+        <div class="term reveal"><h5>RDBMS</h5><p class="one">Relational DBMS.</p><p>A DBMS that organizes data into tables (relations) with rows and columns, and lets you relate tables via keys. PostgreSQL is an RDBMS.</p></div>
+        <div class="term reveal"><h5>Table (Relation)</h5><p class="one">A grid of rows and columns.</p><p>The basic storage structure in a relational database. Each table holds data about one type of entity, such as employees.</p></div>
+        <div class="term reveal"><h5>Row (Tuple / Record)</h5><p class="one">One entry in a table.</p><p>A single horizontal record representing one instance of the entity &mdash; e.g. one employee, with a value in each column.</p></div>
+        <div class="term reveal"><h5>Column (Attribute / Field)</h5><p class="one">One property in a table.</p><p>A vertical slice holding one kind of value for every row, such as <code>salary</code> or <code>email</code>. Each column has a defined data type.</p></div>
+        <div class="term reveal"><h5>Schema</h5><p class="one">The blueprint / namespace.</p><p>Two senses: (1) the overall design of a database &mdash; its tables, columns, and relationships; (2) in Postgres, a named container that groups objects (like <code>public</code>).</p></div>
+        <div class="term reveal"><h5>Domain</h5><p class="one">The allowed values for a column.</p><p>The set of valid values a column may hold, defined by its data type and constraints &mdash; e.g. the domain of <code>salary</code> is positive numbers.</p></div>
+        <div class="term reveal"><h5>Metadata / Catalog</h5><p class="one">Data about the data.</p><p>Information describing the database's own structure &mdash; table names, column types, constraints. Postgres exposes it via the system catalog and <code>information_schema</code>.</p></div>
+      </div>
+
+      <h3 class="subhead">Keys</h3>
+      <div class="terms">
+        <div class="term reveal"><h5>Primary Key</h5><p class="one">The unique row identifier.</p><p>A column (or set of columns) that uniquely identifies each row. It cannot be <code>NULL</code> and cannot repeat. Every table should have one.</p></div>
+        <div class="term reveal"><h5>Foreign Key</h5><p class="one">A link to another table.</p><p>A column whose values must match a primary key in another table, enforcing a relationship &mdash; e.g. <code>employees.dept_id</code> references <code>departments.dept_id</code>.</p></div>
+        <div class="term reveal"><h5>Candidate Key</h5><p class="one">A possible primary key.</p><p>Any minimal column set that could uniquely identify rows. One candidate is chosen as the primary key; the rest become alternate keys.</p></div>
+        <div class="term reveal"><h5>Super Key</h5><p class="one">Any unique-identifying set.</p><p>Any set of columns that uniquely identifies a row &mdash; including redundant ones. Candidate keys are the minimal super keys.</p></div>
+        <div class="term reveal"><h5>Composite Key</h5><p class="one">A key made of several columns.</p><p>A primary key spanning two or more columns, used when no single column is unique &mdash; e.g. <code>(emp_id, project_id)</code> in the junction table.</p></div>
+        <div class="term reveal"><h5>Alternate / Unique Key</h5><p class="one">A candidate key not chosen as primary.</p><p>Enforces uniqueness without being the primary key. In SQL you declare it with the <code>UNIQUE</code> constraint (e.g. <code>email</code>).</p></div>
+        <div class="term reveal"><h5>Surrogate vs Natural Key</h5><p class="one">Made-up ID vs real-world value.</p><p>A surrogate key is a system-generated ID (like a <code>SERIAL</code>) with no business meaning. A natural key is real data that's already unique (like an email or ISBN).</p></div>
+      </div>
+
+      <h3 class="subhead">Constraints &amp; integrity</h3>
+      <div class="terms">
+        <div class="term reveal"><h5>Constraint</h5><p class="one">A rule enforced on data.</p><p>A condition the database guarantees will always hold: <code>NOT NULL</code>, <code>UNIQUE</code>, <code>CHECK</code>, <code>DEFAULT</code>, <code>PRIMARY KEY</code>, <code>FOREIGN KEY</code>.</p></div>
+        <div class="term reveal"><h5>Entity Integrity</h5><p class="one">Every row is identifiable.</p><p>The rule that a primary key must be unique and never <code>NULL</code>, so each row can be told apart from every other.</p></div>
+        <div class="term reveal"><h5>Referential Integrity</h5><p class="one">No broken links.</p><p>The rule that every foreign-key value must point to a real row in the referenced table (or be <code>NULL</code>). You can't reference a department that doesn't exist.</p></div>
+        <div class="term reveal"><h5>Domain Integrity</h5><p class="one">Valid values only.</p><p>Ensures column values fall within their allowed type and constraints &mdash; you can't put text in an <code>INT</code> column or a negative salary past a <code>CHECK</code>.</p></div>
+        <div class="term reveal"><h5>Cascading Actions</h5><p class="one">Changes ripple through links.</p><p><code>ON DELETE CASCADE</code> deletes child rows when a parent is removed; <code>SET NULL</code> nulls the link; <code>RESTRICT</code> blocks the delete. Controls what happens to related rows.</p></div>
+      </div>
+
+      <h3 class="subhead">Design &amp; modeling</h3>
+      <div class="terms">
+        <div class="term reveal"><h5>Entity</h5><p class="one">A real-world thing you store.</p><p>An object or concept the database tracks &mdash; an employee, a department, a project. Entities typically become tables.</p></div>
+        <div class="term reveal"><h5>Relationship</h5><p class="one">How entities connect.</p><p>An association between entities, such as "an employee belongs to a department". Modeled with foreign keys or junction tables.</p></div>
+        <div class="term reveal"><h5>ER Model / ER Diagram</h5><p class="one">A visual data blueprint.</p><p>The Entity-Relationship model diagrams entities, their attributes, and the relationships between them &mdash; the standard way to design a schema before building it.</p></div>
+        <div class="term reveal"><h5>Cardinality</h5><p class="one">How many relate to how many.</p><p>The nature of a relationship: one-to-one (1:1), one-to-many (1:N), or many-to-many (M:N). Employees-to-department is 1:N; employees-to-projects is M:N.</p></div>
+        <div class="term reveal"><h5>Junction Table</h5><p class="one">Resolves many-to-many.</p><p>A bridge table that connects two entities in an M:N relationship, holding a foreign key to each &mdash; e.g. <code>employee_projects</code>.</p></div>
+      </div>
+
+      <h3 class="subhead">Normalization</h3>
+      <div class="terms">
+        <div class="term reveal wide"><h5>Normalization</h5><p class="one">Organizing tables to reduce redundancy.</p><p>The process of structuring tables so data isn't repeated and relationships are clean, which prevents update/insert/delete anomalies. Achieved by applying successive "normal forms". The trade-off is more tables and more joins.</p></div>
+        <div class="term reveal"><h5>Functional Dependency</h5><p class="one">One column determines another.</p><p>When column A's value fixes column B's value (written A &rarr; B). Normalization is built on analyzing these dependencies.</p></div>
+        <div class="term reveal"><h5>1NF (First Normal Form)</h5><p class="one">Atomic values, no repeating groups.</p><p>Each cell holds a single value and each row is unique. No lists crammed into one field.</p></div>
+        <div class="term reveal"><h5>2NF (Second Normal Form)</h5><p class="one">No partial dependencies.</p><p>Is in 1NF, and every non-key column depends on the <em>whole</em> composite key, not just part of it.</p></div>
+        <div class="term reveal"><h5>3NF (Third Normal Form)</h5><p class="one">No transitive dependencies.</p><p>Is in 2NF, and non-key columns depend only on the key &mdash; not on other non-key columns. The common practical target.</p></div>
+        <div class="term reveal"><h5>BCNF</h5><p class="one">A stricter 3NF.</p><p>Boyce-Codd Normal Form: for every dependency A &rarr; B, A must be a super key. Resolves edge cases 3NF misses.</p></div>
+        <div class="term reveal"><h5>Denormalization</h5><p class="one">Deliberately adding redundancy.</p><p>Intentionally duplicating data (fewer joins) to speed up reads &mdash; a conscious performance trade-off, common in analytics and warehouses.</p></div>
+        <div class="term reveal"><h5>Anomalies</h5><p class="one">Problems from bad structure.</p><p>Update, insertion, and deletion anomalies &mdash; inconsistencies that arise when data is redundantly stored. Normalization exists to eliminate them.</p></div>
+      </div>
+
+      <h3 class="subhead">Transactions &amp; concurrency</h3>
+      <div class="terms">
+        <div class="term reveal"><h5>Transaction</h5><p class="one">An all-or-nothing unit of work.</p><p>A sequence of operations treated as one logical action &mdash; it either fully completes (commits) or fully undoes (rolls back).</p></div>
+        <div class="term reveal wide"><h5>ACID Properties</h5><p class="one">The four guarantees of a reliable transaction.</p><p><b>Atomicity</b> &mdash; all steps happen or none do. <b>Consistency</b> &mdash; the database moves from one valid state to another, respecting all rules. <b>Isolation</b> &mdash; concurrent transactions don't interfere with each other. <b>Durability</b> &mdash; once committed, changes survive crashes and power loss.</p></div>
+        <div class="term reveal"><h5>Concurrency Control</h5><p class="one">Managing simultaneous access.</p><p>Techniques that let many users read and write at once without corrupting data or seeing inconsistent results.</p></div>
+        <div class="term reveal"><h5>Locking</h5><p class="one">Reserving data during use.</p><p>A mechanism that restricts access to data while it's being changed. Shared (read) locks coexist; exclusive (write) locks don't.</p></div>
+        <div class="term reveal"><h5>Deadlock</h5><p class="one">Two transactions stuck waiting.</p><p>When transaction A holds a lock B needs, and B holds one A needs &mdash; neither can proceed. The DBMS detects this and aborts one.</p></div>
+        <div class="term reveal"><h5>Isolation Levels</h5><p class="one">How much transactions see of each other.</p><p>From Read Uncommitted to Serializable, they trade concurrency for consistency, controlling phenomena like dirty reads, non-repeatable reads, and phantom reads.</p></div>
+        <div class="term reveal"><h5>Dirty / Phantom Read</h5><p class="one">Concurrency side effects.</p><p>A <em>dirty read</em> sees another transaction's uncommitted change; a <em>non-repeatable read</em> gets different values for the same row twice; a <em>phantom read</em> sees new rows appear mid-transaction.</p></div>
+        <div class="term reveal"><h5>MVCC</h5><p class="one">Multi-Version Concurrency Control.</p><p>Postgres's approach: each transaction sees a consistent snapshot, and writers create new row versions instead of blocking readers. Readers never block writers and vice-versa.</p></div>
+      </div>
+
+      <h3 class="subhead">Database objects</h3>
+      <div class="terms">
+        <div class="term reveal"><h5>Index</h5><p class="one">A fast-lookup structure.</p><p>A sorted data structure (usually a B-tree) that speeds up searches on a column, at the cost of extra storage and slightly slower writes.</p></div>
+        <div class="term reveal"><h5>View</h5><p class="one">A saved query as a virtual table.</p><p>A named <code>SELECT</code> you can query like a table. It stores no data itself and always reflects the latest underlying rows.</p></div>
+        <div class="term reveal"><h5>Materialized View</h5><p class="one">A cached query result.</p><p>Like a view but physically stores its results for fast reads; must be refreshed to reflect new data.</p></div>
+        <div class="term reveal"><h5>Stored Procedure / Function</h5><p class="one">Reusable server-side code.</p><p>Precompiled SQL (and procedural logic) saved in the database and invoked by name &mdash; for encapsulating business logic close to the data.</p></div>
+        <div class="term reveal"><h5>Trigger</h5><p class="one">Code that fires on an event.</p><p>A function that runs automatically before or after an <code>INSERT</code>, <code>UPDATE</code>, or <code>DELETE</code> &mdash; used for auditing, validation, or derived values.</p></div>
+        <div class="term reveal"><h5>Cursor</h5><p class="one">Row-by-row result processing.</p><p>A pointer that lets you fetch and process query results one row at a time, instead of all at once &mdash; useful for very large result sets.</p></div>
+        <div class="term reveal"><h5>Sequence</h5><p class="one">An auto-incrementing counter.</p><p>A database object that generates a stream of unique numbers, powering <code>SERIAL</code> and identity columns.</p></div>
+      </div>
+
+      <h3 class="subhead">Query language</h3>
+      <div class="terms">
+        <div class="term reveal wide"><h5>SQL sublanguages</h5><p class="one">The five families of SQL commands.</p><p><b>DDL</b> (Definition: <code>CREATE</code>, <code>ALTER</code>, <code>DROP</code>) shapes structure. <b>DML</b> (Manipulation: <code>INSERT</code>, <code>UPDATE</code>, <code>DELETE</code>) changes data. <b>DQL</b> (Query: <code>SELECT</code>) reads it. <b>DCL</b> (Control: <code>GRANT</code>, <code>REVOKE</code>) manages permissions. <b>TCL</b> (Transaction: <code>COMMIT</code>, <code>ROLLBACK</code>) manages transactions.</p></div>
+        <div class="term reveal"><h5>CRUD</h5><p class="one">Create, Read, Update, Delete.</p><p>The four basic data operations, mapping to <code>INSERT</code>, <code>SELECT</code>, <code>UPDATE</code>, and <code>DELETE</code> &mdash; the backbone of almost every application.</p></div>
+        <div class="term reveal"><h5>Join</h5><p class="one">Combining rows across tables.</p><p>An operation that matches rows from two or more tables on a related column to produce a combined result set.</p></div>
+        <div class="term reveal"><h5>Aggregate Function</h5><p class="one">Many rows &rarr; one value.</p><p>Functions like <code>COUNT</code>, <code>SUM</code>, <code>AVG</code>, <code>MIN</code>, <code>MAX</code> that summarize a group of rows into a single result.</p></div>
+        <div class="term reveal"><h5>Query Optimizer</h5><p class="one">Picks the fastest execution plan.</p><p>The DBMS component that analyzes a query and chooses how to run it (which indexes, join order, scan types) to minimize cost. Inspect its choices with <code>EXPLAIN</code>.</p></div>
+        <div class="term reveal"><h5>Execution Plan</h5><p class="one">The chosen steps to run a query.</p><p>The sequence of operations the optimizer settles on &mdash; scans, joins, sorts. Reading it is key to diagnosing slow queries.</p></div>
+      </div>
+
+      <h3 class="subhead">Architecture &amp; scaling</h3>
+      <div class="terms">
+        <div class="term reveal"><h5>OLTP vs OLAP</h5><p class="one">Transactions vs analytics.</p><p><b>OLTP</b> (Online Transaction Processing) handles many small, fast reads/writes &mdash; the app database. <b>OLAP</b> (Online Analytical Processing) runs large, complex read queries for reporting and analysis.</p></div>
+        <div class="term reveal"><h5>Data Warehouse</h5><p class="one">A store built for analytics.</p><p>A large repository consolidating data from many sources, optimized for OLAP-style querying and business intelligence rather than day-to-day transactions.</p></div>
+        <div class="term reveal"><h5>Replication</h5><p class="one">Copying data across servers.</p><p>Keeping synchronized copies of a database on multiple machines for high availability and read scaling. A primary accepts writes; replicas serve reads.</p></div>
+        <div class="term reveal"><h5>Partitioning</h5><p class="one">Splitting one big table.</p><p>Dividing a large table into smaller physical pieces (by range, list, or hash) to improve manageability and query performance, while it still looks like one table.</p></div>
+        <div class="term reveal"><h5>Sharding</h5><p class="one">Splitting data across databases.</p><p>Horizontally partitioning data across multiple independent database servers so each holds a subset &mdash; a strategy for scaling beyond one machine.</p></div>
+        <div class="term reveal"><h5>CAP Theorem</h5><p class="one">Pick two of three under partition.</p><p>A distributed system can't simultaneously guarantee Consistency, Availability, and Partition tolerance &mdash; when the network splits, you must trade consistency against availability.</p></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p><b>Simple SQL</b> &mdash; a practical PostgreSQL &amp; DBMS reference. Every statement runs against the sample database at the top; copy any block and try it in <code>psql</code>, pgAdmin, or a hosted Postgres.</p>
+      <p style="margin-top:6px">Built as a single, dependency-free HTML file &mdash; ready to publish on GitHub Pages. Use the filter box to find any statement or concept instantly.</p>
+    </footer>
+
+  </div>
+  </main>
+</div>
+
+<script>
+/* 1. SQL SYNTAX HIGHLIGHTER */
+(function(){
+  var KEYWORDS = new Set(("SELECT FROM WHERE INSERT INTO VALUES UPDATE SET DELETE CREATE TABLE DATABASE "+
+    "SCHEMA VIEW MATERIALIZED INDEX UNIQUE DROP ALTER ADD COLUMN CONSTRAINT PRIMARY KEY FOREIGN "+
+    "REFERENCES DEFAULT NOT NULL CHECK AND OR IN LIKE ILIKE BETWEEN IS AS ON USING JOIN INNER LEFT "+
+    "RIGHT FULL OUTER CROSS NATURAL GROUP BY ORDER HAVING LIMIT OFFSET FETCH FIRST NEXT ROWS ONLY "+
+    "DISTINCT ALL UNION INTERSECT EXCEPT CASE WHEN THEN ELSE END ASC DESC NULLS LAST WITH RECURSIVE "+
+    "OVER PARTITION RANGE PRECEDING FOLLOWING CURRENT ROW UNBOUNDED BEGIN COMMIT ROLLBACK SAVEPOINT "+
+    "TRANSACTION GRANT REVOKE ROLE LOGIN PASSWORD USER TO TRUNCATE CASCADE RESTRICT RETURNING CONFLICT "+
+    "DO NOTHING EXCLUDED EXISTS ANY SOME CAST INT INTEGER BIGINT SMALLINT SERIAL BIGSERIAL NUMERIC "+
+    "DECIMAL REAL DOUBLE PRECISION BOOLEAN BOOL TEXT VARCHAR CHAR CHARACTER VARYING DATE TIME "+
+    "TIMESTAMP TIMESTAMPTZ INTERVAL UUID JSON JSONB ARRAY GENERATED ALWAYS IDENTITY IF TEMP TEMPORARY "+
+    "EXPLAIN ANALYZE VACUUM LANGUAGE FUNCTION RETURNS TRIGGER BEFORE AFTER EACH STATEMENT FOR DECLARE "+
+    "RENAME TYPE TRUE FALSE").split(/\s+/));
+
+  function esc(s){return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
+  function span(cls,txt){return '<span class="s-'+cls+'">'+esc(txt)+'</span>';}
+  var RE = /(--[^\n]*)|(\/\*[\s\S]*?\*\/)|('(?:[^']|'')*')|("(?:[^"]|"")*")|(\b\d+(?:\.\d+)?\b)|([A-Za-z_][A-Za-z0-9_]*)|(\s+)|([\s\S])/g;
+
+  function highlight(raw){
+    var out="", m; RE.lastIndex=0;
+    while((m=RE.exec(raw))!==null){
+      if(m[1]!=null||m[2]!=null){ out+=span("com",m[0]); }
+      else if(m[3]!=null){ out+=span("str",m[0]); }
+      else if(m[4]!=null){ out+=span("id",m[0]); }
+      else if(m[5]!=null){ out+=span("num",m[0]); }
+      else if(m[6]!=null){
+        if(KEYWORDS.has(m[6].toUpperCase())){ out+=span("kw",m[0]); }
+        else {
+          var i=RE.lastIndex;
+          while(i<raw.length && /\s/.test(raw.charAt(i))) i++;
+          out += (raw.charAt(i)==="(") ? span("fn",m[0]) : span("id",m[0]);
+        }
+      }
+      else if(m[7]!=null){ out+=esc(m[0]); }
+      else { out+=span("punct",m[0]); }
+    }
+    return out;
+  }
+
+  document.querySelectorAll("code.sql").forEach(function(code){
+    var promptEl = code.querySelector(".prompt");
+    var promptTxt = promptEl ? promptEl.textContent : "";
+    var promptHTML = promptEl ? promptEl.outerHTML : "";
+    var full = code.textContent;
+    var raw = promptTxt ? full.slice(promptTxt.length) : full;
+    code.setAttribute("data-raw", full);
+    code.innerHTML = promptHTML + highlight(raw);
+  });
+  document.querySelectorAll("code.plain").forEach(function(code){
+    code.setAttribute("data-raw", code.textContent);
+  });
+})();
+
+/* 2. COPY BUTTONS */
+document.querySelectorAll(".code__copy").forEach(function(btn){
+  function fallback(text){
+    var ta=document.createElement("textarea");
+    ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+    document.body.appendChild(ta); ta.select();
+    try{ document.execCommand("copy"); }catch(e){}
+    document.body.removeChild(ta);
+  }
+  btn.addEventListener("click",function(){
+    var fig = btn.closest(".code");
+    var code = fig ? fig.querySelector("code") : null;
+    if(!code) return;
+    var text = code.getAttribute("data-raw") || code.textContent;
+    function done(){
+      btn.textContent = "Copied"; btn.classList.add("ok");
+      setTimeout(function(){ btn.textContent = "Copy"; btn.classList.remove("ok"); }, 1400);
+    }
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(done).catch(function(){ fallback(text); done(); });
+    } else { fallback(text); done(); }
+  });
+});
+
+/* 3. LIVE SEARCH / FILTER */
+(function(){
+  var input = document.getElementById("search");
+  var cards = Array.prototype.slice.call(document.querySelectorAll(".topic, .term"));
+  var blocks = Array.prototype.slice.call(document.querySelectorAll(".block"));
+  var subheads = Array.prototype.slice.call(document.querySelectorAll(".subhead"));
+  function apply(){
+    var q = input.value.trim().toLowerCase();
+    var terms = q.split(/\s+/).filter(Boolean);
+    cards.forEach(function(c){
+      if(terms.length===0){ c.classList.remove("no-match"); return; }
+      var t = c.textContent.toLowerCase();
+      var hit = terms.every(function(w){ return t.indexOf(w) !== -1; });
+      c.classList.toggle("no-match", !hit);
+    });
+    blocks.forEach(function(b){
+      if(terms.length===0){ b.classList.remove("no-match"); return; }
+      var hasCards = b.querySelector(".topic, .term");
+      if(!hasCards) return;
+      var visible = b.querySelectorAll(".topic:not(.no-match), .term:not(.no-match)").length;
+      b.classList.toggle("no-match", visible===0);
+    });
+    subheads.forEach(function(h){
+      if(terms.length===0){ h.classList.remove("no-match"); return; }
+      var vis=0, n=h.nextElementSibling;
+      if(n && n.classList.contains("terms")){ vis = n.querySelectorAll(".term:not(.no-match)").length; }
+      h.classList.toggle("no-match", vis===0);
+    });
+  }
+  input.addEventListener("input", apply);
+})();
+
+/* 4. SCROLLSPY */
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll(".nav a"));
+  var map = {};
+  links.forEach(function(a){
+    var id = a.getAttribute("href").slice(1);
+    var sec = document.getElementById(id);
+    if(sec) map[id] = a;
+  });
+  var sections = Object.keys(map).map(function(id){ return document.getElementById(id); });
+  if(!("IntersectionObserver" in window)) return;
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){
+        links.forEach(function(l){ l.classList.remove("active"); });
+        var a = map[e.target.id];
+        if(a) a.classList.add("active");
+      }
+    });
+  }, { rootMargin: "-15% 0px -75% 0px", threshold: 0 });
+  sections.forEach(function(s){ obs.observe(s); });
+})();
+
+/* 5. REVEAL ON SCROLL */
+(function(){
+  var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  var els = document.querySelectorAll(".reveal");
+  if(reduce || !("IntersectionObserver" in window)){
+    els.forEach(function(el){ el.classList.add("in"); }); return;
+  }
+  var obs = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add("in"); obs.unobserve(e.target); }
+    });
+  }, { threshold: 0.08 });
+  els.forEach(function(el){ obs.observe(el); });
+})();
+
+/* 6. MOBILE NAV */
+(function(){
+  var btn = document.getElementById("menuBtn");
+  var side = document.getElementById("sidebar");
+  var scrim = document.getElementById("scrim");
+  function open(){ side.classList.add("open"); scrim.classList.add("show"); btn.setAttribute("aria-label","Close navigation"); }
+  function close(){ side.classList.remove("open"); scrim.classList.remove("show"); btn.setAttribute("aria-label","Open navigation"); }
+  btn.addEventListener("click", function(){ side.classList.contains("open") ? close() : open(); });
+  scrim.addEventListener("click", close);
+  side.addEventListener("click", function(e){ if(e.target.tagName === "A") close(); });
+})();
+</script>
+</body>
+</html>
